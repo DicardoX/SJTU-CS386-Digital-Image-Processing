@@ -34,7 +34,13 @@
 
 [HDR 是什么？有哪些具体介绍？](https://www.zhihu.com/question/19774840)
 
+-------------------------------
 
+## 3. 数据集
+
+[https://www.hdrplusdata.org/dataset.html](https://www.hdrplusdata.org/dataset.html)
+
+[https://data.csail.mit.edu/graphics/fivek/](https://data.csail.mit.edu/graphics/fivek/)
 
 
 

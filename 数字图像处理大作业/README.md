@@ -51,6 +51,6 @@
  
  - `SSIM`: **结构相似性**，衡量两幅图相似度的指标
  
- - `HDR-VDP-2`: **失真准则**，专门针对 HDR 图像的评价指标
+ - `HDR-VDP-2`: **失真准则**，专门针对 HDR 图像的评价指标。[HDR VDP](http://resources.mpi-inf.mpg.de/hdr/vdp/)
 
 

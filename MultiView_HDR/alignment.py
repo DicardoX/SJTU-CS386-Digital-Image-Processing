@@ -3,7 +3,7 @@ import numpy as np
 # ORB image alignment
 MAX_FEATURES = 500
 GOOD_MATCH_PERCENT = 0.15
-def imageAlignment(im1, im2):
+def imageAlignment(im2, im1):
     # Convert images to grayscale
     im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
     im2Gray = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)

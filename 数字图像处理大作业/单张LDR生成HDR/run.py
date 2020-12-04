@@ -14,9 +14,9 @@ def reshape_image(image):
     if shape[0] <= 1024 and shape[1] <= 1024:
         return image
     print("Original shape: ", shape)
-    while shape[0] > 1024 or shape[1] > 1024:
-        image = cv2.resize(image, (int(shape[1] / 2), int(shape[0] / 2)), interpolation=cv2.INTER_AREA)
-        shape = image.shape
+    # while shape[0] > 1024 or shape[1] > 1024:
+    #     image = cv2.resize(image, (int(shape[1] / 2), int(shape[0] / 2)), interpolation=cv2.INTER_AREA)
+    #     shape = image.shape
     print("Current shape: ", image.shape)
     return image
 

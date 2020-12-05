@@ -1,0 +1,5 @@
+# Default ignored files
+MultiView_HDR/test_image/
+MultiView_HDR/mid
+MultiView_HDR/res
+OpenCV_Sample/

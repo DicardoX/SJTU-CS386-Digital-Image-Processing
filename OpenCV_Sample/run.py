@@ -8,7 +8,7 @@ import numpy as np
 import os.path
 import exifread
 import rawpy
-
+import pyecc
 # RAW to BGR
 def readRawImage(filename):
     raw = rawpy.imread(filename)
@@ -74,14 +74,16 @@ def getImageStackAndExpos(folderPath):
     filenames = []
     for file in files:
         filePath = join(folderPath,file)
-        exposTime = get_exposure_time(filePath)
-        if(file_extension(filePath)=='.jpg'):
+        # exposTime = get_exposure_time(filePath)
+        if(file_extension(filePath)!='.dng'):
             currImage = cv.imread(filePath)
         elif(file_extension(filePath)=='.dng'):
             currImage = readRawImage(filePath)
-        exposTimes.append(exposTime)
+        # exposTimes.append(exposTime)
         imageStack.append(currImage)
         filenames.append(file)
+    exposTimes = [1.0/1000,1.0/500,1.0/250,1.0/125,1.0/60,1.0/30,1.0/15,1.0/8,1.0/4,1.0/2,1.0,2.0,3.75,7.5,15,30]
+    exposTimes.reverse()
     #根据曝光时间长短，对图像序列和曝光时间序列重新排序
     index = sorted(range(len(exposTimes)), key=lambda k: exposTimes[k])
     exposTimes = [exposTimes[i] for i in index]
@@ -102,44 +104,65 @@ def getRefImage(imgStack):
     for imgIndex in np.arange(len(imgStack)):
         curImg = imgStack[imgIndex]
         curSaturNum = getSaturNum(curImg)
-        # print(curSaturNum)
+        print(curSaturNum)
         if curSaturNum <= saturNum:
             saturNum = curSaturNum
             refIndex = imgIndex
-
-    return  refIndex
+    # print(refIndex)
+    return 9
 
 # ORB image alignment
-MAX_FEATURES = 500
-GOOD_MATCH_PERCENT = 0.15
-def imageAlignment(im1, im2):
+
+MAX_MATCHES = 50000
+GOOD_MATCH_PERCENT = 0.05
+
+def lowBrightGragImgProcess(imgGray):
+    w = imgGray.shape[1]
+    h = imgGray.shape[0]
+
+    flag = False
+    cal = np.array(imgGray)
+    cal = cal.mean()
+    if(cal<20):
+        for xi in range(0,w):
+            for xj in range(0,h):
+                imgGray[xj,xi] = imgGray[xj,xi]*2
+
+    return imgGray
+
+def imageAlignment(im2, im1):
+
     # Convert images to grayscale
     im1Gray = cv.cvtColor(im1, cv.COLOR_BGR2GRAY)
     im2Gray = cv.cvtColor(im2, cv.COLOR_BGR2GRAY)
 
     # Detect ORB features and compute descriptors.
-    orb = cv.ORB_create(MAX_FEATURES)
+    orb = cv.ORB_create(MAX_MATCHES)
     keypoints1, descriptors1 = orb.detectAndCompute(im1Gray, None)
     keypoints2, descriptors2 = orb.detectAndCompute(im2Gray, None)
 
+    # print(len(keypoints1),len(keypoints2))
     # Match features.
     matcher = cv.DescriptorMatcher_create(cv.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
     matches = matcher.match(descriptors1, descriptors2, None)
 
     # Sort matches by score
     matches.sort(key=lambda x: x.distance, reverse=False)
-
+    # print(len(matches))
+    if(len(matches)<1000):
+        return im1,None,False
     # Remove not so good matches
     numGoodMatches = int(len(matches) * GOOD_MATCH_PERCENT)
     matches = matches[:numGoodMatches]
 
     # Draw top matches
     imMatches = cv.drawMatches(im1, keypoints1, im2, keypoints2, matches, None)
-    cv.imwrite("./res/matches.jpg", imMatches)
+    cv.imwrite("./mid/"+str(os.times())+"matches.jpg", imMatches)
 
     # Extract location of good matches
     points1 = np.zeros((len(matches), 2), dtype=np.float32)
     points2 = np.zeros((len(matches), 2), dtype=np.float32)
+
     for i, match in enumerate(matches):
         points1[i, :] = keypoints1[match.queryIdx].pt
         points2[i, :] = keypoints2[match.trainIdx].pt
@@ -151,30 +174,36 @@ def imageAlignment(im1, im2):
     height, width, channels = im2.shape
     im1Reg = cv.warpPerspective(im1, h, (width, height))
 
-    return im1Reg, h
+    return im1Reg,h,True
+
 
 def Alignment(imgStack,refIndex):
     refImg = imgStack[refIndex]
     outStack = []
+    exposureStack = []
     for index in np.arange(len(imgStack)):
         if index == refIndex:
             outStack.append(refImg)
+            exposureStack.append(exposure_times[index])
         else:
             currImg = imgStack[index]
-            outImg,_ = imageAlignment(refImg,currImg)
-            outStack.append(outImg)
-    return outStack
+            outImg,_,flag = imageAlignment(refImg,currImg)
+            if(flag):
+                outStack.append(outImg)
+                exposureStack.append(exposure_times[index])
+                cv.imwrite('./mid/'+str(index)+'.jpg', outImg)
+    return outStack, exposureStack
 
 if __name__ == '__main__':
     fileFolderPath = './input/'
     exposure_times,img_list,filenames = getImageStackAndExpos(fileFolderPath)
 
-    # Align input images
-    alignMTB = cv.createAlignMTB()
-    alignMTB.process(img_list, img_list)
+    # # Align input images
+    # alignMTB = cv.createAlignMTB()
+    # alignMTB.process(img_list, img_list)
 
-    # refImgIndex= getRefImage(img_list)
-    # img_list = Alignment(img_list,refImgIndex)
+    refImgIndex= getRefImage(img_list)
+    img_list, exposure_times = Alignment(img_list,refImgIndex)
 
     exposure_times = np.array(exposure_times,dtype=np.float32) #需要转化为numpy浮点数组
     # Merge exposures to HDR image

@@ -18,5 +18,5 @@ def getRefImage(imgStack):
         if curSaturNum <= saturNum:
             saturNum = curSaturNum
             refIndex = imgIndex
-
+    print(refIndex)
     return  refIndex

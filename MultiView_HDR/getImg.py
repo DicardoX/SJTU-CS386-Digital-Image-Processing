@@ -63,7 +63,7 @@ def getImageStackAndExpos(folderPath):
         filePath = join(folderPath,file)
         exposTime = get_exposure_time(filePath)
         if(file_extension(filePath)=='.jpg'):
-            currImage = cv.imread(filePath)
+            currImage = cv2.imread(filePath)
         elif(file_extension(filePath)=='.dng'):
             currImage = readRawImage(filePath)
         exposTimes.append(exposTime)

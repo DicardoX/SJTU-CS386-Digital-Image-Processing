@@ -3,45 +3,21 @@ from pylab import *
 
 import alignment
 import getImg
-import chooseRef
 
 if __name__ == '__main__':
 
-    # filename = "./test_image/" + input("Please input the filename of the picture: ")
-    # ft1=filetype.guess(filename)
-    # if ft1 is None:
-    #     print('无法判断该文件类型')
-    # print('文件扩展名为：{}'.format(ft1.extension))
-    # print('文件类型为：{}'.format(ft1.mime))
-    # fileExt = format(ft1.extension)
-    # JPGexifread(filename)
-    # if(fileExt == 'jpg'):
-    #     JPGexifread(filename)
-    # if(fileExt == 'tif'):
     fileFolderPath = './test_image/myTest/'
     exposTimes,images,filenames = getImg.getImageStackAndExpos(fileFolderPath)
 
-    # MTB
-    # Align input images
-    alignMTB = cv2.createAlignMTB()
-    alignMTB.process(images, images)
-    # for i in range(0, len(images)):
-    #     cv2.imwrite('./mid/'+filenames[i], images[i])
-    #
     # mergeMertens = cv2.createMergeMertens()
     # exposureFusion = mergeMertens.process(images)
     # cv2.imwrite("./res/exposure-fusion.jpg", exposureFusion * 255)
 
-    # ORB
-    # exposure_Times,image_list,filenames = getImg.getImageStackAndExpos(fileFolderPath)
-    # print(exposTimes)
-    # print(filenames)
-    # refImgIndex= chooseRef.getRefImage(image_list)
-    # images = alignment.Alignment(image_list,refImgIndex)
-    # for i in range(0, len(images)):
-    #     cv2.imwrite('./mid/'+filenames[i], images[i])
+    exposTimes,image_list,filenames = getImg.getImageStackAndExpos(fileFolderPath)
 
-    exposTimes = np.array(exposTimes,dtype=np.float32) #需要转化为numpy浮点数组
+    images, exposTimes = alignment.process(image_list,exposTimes,'ORB')
+
+    exposTimes = np.array(exposTimes,dtype=np.float32) #convert to numpy float
     # print('exposure time:', exposTimes)
 
     # restore camera response
@@ -52,15 +28,8 @@ if __name__ == '__main__':
     # Save HDR image.
     cv2.imwrite("./res/hdrDebevec.hdr", hdrDebevec)
 
-    # # # Robertson method
-    # calibrateRobertson = cv2.createCalibrateRobertson()
-    # responseRobertson = calibrateRobertson.process(images, exposTimes)
-    # mergeRobertson = cv2.createMergeRobertson()
-    # hdrRobertson = mergeRobertson.process(images, exposTimes, responseRobertson)
-    # cv2.imwrite("./res/hdrRobertson.hdr", hdrRobertson)
 
     '''HDR photo converts to LDR'''
-
     # Tonemap using Drago's method to obtain 24-bit color image
     tonemapDrago = cv2.createTonemapDrago(1.0, 0.7)
     ldrDrago = tonemapDrago.process(hdrDebevec)

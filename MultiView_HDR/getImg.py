@@ -1,12 +1,13 @@
+import os.path
 from os import listdir
-from os.path import isfile, isdir, join
-from PIL import Image
-from PIL.ExifTags import TAGS
+from os.path import isfile, join
+
 import PIL.ExifTags
 import cv2
-import os.path
 import exifread
 import rawpy
+from PIL import Image
+
 
 # RAW to BGR
 def readRawImage(filename):
@@ -62,13 +63,16 @@ def getImageStackAndExpos(folderPath):
     for file in files:
         filePath = join(folderPath,file)
         exposTime = get_exposure_time(filePath)
-        if(file_extension(filePath)=='.jpg'):
+        if(file_extension(filePath)!='.dng'):
             currImage = cv2.imread(filePath)
         elif(file_extension(filePath)=='.dng'):
             currImage = readRawImage(filePath)
         exposTimes.append(exposTime)
         imageStack.append(currImage)
         filenames.append(file)
+    # exposTimes = [1.0/1000,1.0/500,1.0/250,1.0/125,1.0/60,1.0/30,1.0/15,1.0/8,1.0/4,1.0/2,1.0,2.0,3.75,7.5,15,30]
+    # exposTimes.reverse()
+
     #根据曝光时间长短，对图像序列和曝光时间序列重新排序
     index = sorted(range(len(exposTimes)), key=lambda k: exposTimes[k])
     exposTimes = [exposTimes[i] for i in index]

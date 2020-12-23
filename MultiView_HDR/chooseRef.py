@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import quality
 
 # preprocess: choose the standard photo
 def getSaturNum(img):
@@ -18,5 +19,21 @@ def getRefImage(imgStack):
         if curSaturNum <= saturNum:
             saturNum = curSaturNum
             refIndex = imgIndex
+    # print(refIndex)
+    return  refIndex
+
+def getRefImage_br(imgStack):
+    bright_list = []
+    # for img in imgStack:
+    #     k = quality.bright(img)
+    #     bright_list.append(k)
+    #
+    # refIndex = bright_list.index(min(bright_list))
+
+    for img in imgStack:
+        k = quality.getImageVar(img)
+        bright_list.append(k)
+
+    refIndex = bright_list.index(max(bright_list))
     print(refIndex)
     return  refIndex

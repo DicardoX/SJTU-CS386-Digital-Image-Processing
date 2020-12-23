@@ -15,7 +15,8 @@ if __name__ == '__main__':
 
     exposTimes,image_list,filenames = getImg.getImageStackAndExpos(fileFolderPath)
 
-    images, exposTimes = alignment.process(image_list,exposTimes,'ORB')
+    images, exposTimes = alignment.process(image_list,exposTimes,'AKAZE')
+    print(len(images))
 
     exposTimes = np.array(exposTimes,dtype=np.float32) #convert to numpy float
     # print('exposure time:', exposTimes)

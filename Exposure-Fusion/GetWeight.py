@@ -8,12 +8,12 @@ import matplotlib
 SIGMA = 0.2
 
 # Weight power
-WC = 1
-WS = 1
-WE = 0.2
+WC = 0.1
+WS = 0.1
+WE = 1
 
-CSHIFT = 0.3
-SSHIFT = 0.1
+CSHIFT = 0
+SSHIFT = 0
 
 # constant
 E = 2.7182818
@@ -25,7 +25,6 @@ def get_contrast(gray_image):
     abs_dst = cv2.convertScaleAbs(dst)
     
     abs_dst = np.array(abs_dst) / 255.0 + CSHIFT
-
     return abs_dst
 
 
@@ -39,52 +38,35 @@ def get_saturation(image):
 
 
 def get_well_exposedness(image):
-
-    def gauss_func(x):
-        t = -(x-0.5)**2/SIGMA**2
-        return math.exp(t)
-
-    # if image is rgb, first convert it to gray style
-    if len(image.shape)==3 and image.shape[2]==3:
-        gray_image = rgb2gray(image)
-    else:
-        gray_image = image
-
-    gray_image = gray_image / 255.0
-    # for loop is too slow
-    # for i in range(gray_image.shape[0]):
-    #     for j in range(gray_image.shape[1]):
-    #         pixel = gray_image[i][j]
-    #         pixel = gauss_func(pixel)
-    #         gray_image[i][j] = pixel
-    exposed = np.array(gray_image)
-    exposed = -(exposed-0.5)**2/SIGMA**2
-    exposed = np.power(E, exposed)
-    return exposed
+    # image = np.array(image / 255.0)
+    # exposedness = -0.5*(image-0.5)**2/SIGMA**2
+    # exposedness = np.power(E, exposedness)
+    # exposedness = exposedness[:, :, 0] * exposedness[:, :, 1] * exposedness[:, :, 2]
+    gray = rgb2gray(image) / 255
+    exposedness = -0.5*(gray-0.56)**2/SIGMA**2
+    exposedness = np.power(E, exposedness)
+    return exposedness
 
 
 def normalize_weight(weight_list):
+    weight_list = np.array(weight_list) + 1e-12 # avoid division by zero
     weight_sum = np.sum(weight_list, axis=0)
-    weight_sum += 1e-10 # avoid divide by zero
     norm_weight_list = []
-
-    # plt.hist(weight_sum.flatten(), facecolor="blue", edgecolor="black", alpha=0.7)
-    # plt.show()
 
     " normalize "    
     for weight in weight_list:
         weight = weight / weight_sum
         norm_weight_list.append(weight)
     
-    #show_image(weight_list[0], "before normalize, 0")
-    #show_image(norm_weight_list[0], "after normalize, 0")
-    # show_image(weight_list[1], "after normalize, 1")
-    #show_image(weight_list[1], "after normalize, 1")
-    # show_image(weight_list[2], "after normalize, 2")
-    #show_image(weight_list[2], "after normalize, 2")
-    
     return np.array(norm_weight_list) 
 
+def smooth_weight_list(wl):
+    nwl = []
+    for w in wl:
+        w = cv2.GaussianBlur(w, (15, 15), 30)
+        w = cv2.GaussianBlur(w, (15, 15), 30)
+        nwl.append(w)
+    return nwl
 
 def get_weight(image_list):
     contrast_list = []
@@ -102,7 +84,7 @@ def get_weight(image_list):
         saturation_list.append(saturation_map)
 
         """ get well exposedness """
-        exposedness_map = get_well_exposedness(gray_image)
+        exposedness_map = get_well_exposedness(image)
         well_exposedness_list.append(exposedness_map)
 
     """ convert to np.array """
@@ -111,7 +93,8 @@ def get_weight(image_list):
     well_exposedness_list = np.array(well_exposedness_list)
 
     """ compute weight """
-    weight_list = np.power(contrast_list, WC) * np.power(saturation_list, WS) * np.power(well_exposedness_list, WE)
+    weight_list = np.power(contrast_list, WC) * np.power(saturation_list, WS) + np.power(well_exposedness_list, WE)
+    weight_list = smooth_weight_list(weight_list)
     normalized_weight_list = normalize_weight(weight_list)
     
     return normalized_weight_list

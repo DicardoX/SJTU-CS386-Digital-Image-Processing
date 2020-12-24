@@ -1,4 +1,6 @@
-from GetWeight import *
+from GetWeight import get_weight
+from Utils import get_image_stack, show_image
+from Pyramid import *
 
 # expand weight list to have rgb 3 channels
 # it is very likely that numpy can handle it gracefully
@@ -20,28 +22,39 @@ def exposure_fusion(image_list):
     
     return fused_image
 
+""" 1) construct gaussian pyramid of weights and laplacian pyramid of images,
+    2) multiply them
+    3) reconsturt output image from the laplacian pyramid
+"""
+def fusion(image_list, weight_list):
+    # get weight pyramid
+    weight_pyr_list = []
+    for w in weight_list:
+        gw = gauss_pyramid(w)
+        weight_pyr_list.append(gw)
 
-# """ only fuse intensity channel"""
-# def var_exposure_fusion(image_list):
-#     weight_list = get_weight(image_list)
-#     yuv_image_list = [rgb2yuv(image) for image in image_list]
-#     yuv_image_list = np.array(yuv_image_list)
+    for i in range(len(weight_pyr_list)):
+        w_pyr = weight_pyr_list[i]
+        w_pyr = w_pyr[0:-1]
+        w_pyr.reverse()
+        weight_pyr_list[i] = w_pyr
 
-#     intensity_list = yuv_image_list[:, :, :, 0]
-#     intensity_list = intensity_list / 255.0
-#     fused_intensity = intensity_list * weight_list
-#     fused_intensity = np.sum(fused_intensity, axis=0) * 255.0
+    # get image pyramid
+    image_pyr_list = []
+    for image in image_list:
+        li = laplacian_pyramid(image)
+        image_pyr_list.append(li)
+
+    # fuse
+    fused_pyr_list = []
+    for w_pyr, i_pyr in zip(weight_pyr_list, image_pyr_list):
+        fused_pyr_list.append(multi_pyr(w_pyr, i_pyr))
+    fused_pyr = np.sum(fused_pyr_list, axis=0)
     
-#     fused_color = yuv_image_list[1, :, :, 1:3]
+    # reconsturct
+    fused_image = reconstruct_pyramid(fused_pyr)
 
-#     shape = fused_intensity.shape
-#     fused_image = np.zeros((shape[0], shape[1], 3))
-#     fused_image[:, :, 0] = fused_intensity
-#     fused_image[:, :, 1:3] = fused_color
-
-#     fused_image = fused_image.astype(np.uint8)
-#     fused_image = yuv2rgb(fused_image)
-#     return fused_image
+    return fused_image
 
 
 if __name__ == "__main__":

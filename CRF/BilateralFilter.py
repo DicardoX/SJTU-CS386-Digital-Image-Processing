@@ -1,5 +1,3 @@
-# 高动态范围图像渲染算法之基于双边滤波的色调映射技术
-
 from CRF import CRF_func, save_hdr
 import cv2
 import numpy as np
@@ -41,16 +39,17 @@ RedVector = hdr[:, :, 2]
 Lw = HSVhdr[:, :, 2]
 # 获取尺寸信息
 size_x, size_y, N = size(Lw)
+# 色彩空间转换 + amma矫正，增加亮度
 bias = 0.7
 for i in range(0, size_x, 1):
     for j in range(0, size_y, 1):
-        Lw[j][i] = (20 * RedVector[j][i] + 40 * GreenVector[j][i] + BlueVector[j][i]) / 61 + bias
+        Lw[j][i] = (20 * pow(RedVector[j][i], 2.2) + 40 * pow(GreenVector[j][i], 2.2) + pow(BlueVector[j][i], 2.2)) / 61 + bias
 # 归一化
 Lw = Regulation(Lw)
 # gamma矫正，增加亮度
-for i in range(0, size_x, 1):
-    for j in range(0, size_y, 1):
-        Lw[j][i] = pow(1.0 * Lw[j][i], 2.2)
+# for i in range(0, size_x, 1):
+#     for j in range(0, size_y, 1):
+#         Lw[j][i] = pow(1.0 * Lw[j][i], 2.2)
 # 双边滤波获得基本层
 #base = cv2.bilateralFilter(Lw, 5, 0.02 * max(size_x, size_y), 0.4)       # #9 邻域直径，两个 75 分别是空间高斯函数标准差，灰度值相似性高斯函数标准差
 base = cv2.bilateralFilter(Lw, 5, 75, 75)       # #9 邻域直径，两个 75 分别是空间高斯函数标准差，灰度值相似性高斯函数标准差

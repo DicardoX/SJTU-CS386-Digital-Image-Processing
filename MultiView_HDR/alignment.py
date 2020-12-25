@@ -2,13 +2,18 @@ import cv2 as cv
 import numpy as np
 import os
 import chooseRef
+import multiThreads
+import SIFT
 
 
 '''ORB image alignment'''
 MAX_MATCHES = 50000
 GOOD_MATCH_PERCENT = 0.05
 
-def ORBimageAlignment(im2, im1):
+def ORBimageAlignment(ori_img2, ori_img1):
+
+    im1 = equalize(ori_img1)
+    im2 = equalize(ori_img2)
 
     # Convert images to grayscale
     im1Gray = cv.cvtColor(im1, cv.COLOR_BGR2GRAY)
@@ -48,8 +53,8 @@ def ORBimageAlignment(im2, im1):
     h, mask = cv.findHomography(points1, points2, cv.RANSAC)
 
     # Use homography
-    height, width, channels = im2.shape
-    im1Reg = cv.warpPerspective(im1, h, (width, height))
+    height, width, channels = ori_img2.shape
+    im1Reg = cv.warpPerspective(ori_img1, h, (width, height))
 
     return im1Reg,h,True
 
@@ -72,13 +77,16 @@ def ORBAlignment(imgStack,refIndex,exposure_times):
     return outStack, exposureStack
 
 '''ECC Alignment'''
-def ECCimageAlignment(im1, im2):
+def ECCimageAlignment(ori_img1, ori_img2):
+    im1 = equalize(ori_img1)
+    im2 = equalize(ori_img2)
+
     # Convert images to grayscale
     im1_gray = cv.cvtColor(im1, cv.COLOR_BGR2GRAY)
     im2_gray = cv.cvtColor(im2, cv.COLOR_BGR2GRAY)
 
     # Find size of image1
-    im1_size = im1.shape
+    im1_size = ori_img1.shape
 
     # Define the motion model
     warp_mode = cv.MOTION_TRANSLATION
@@ -106,11 +114,11 @@ def ECCimageAlignment(im1, im2):
 
     if warp_mode == cv.MOTION_HOMOGRAPHY:
         # Use warpPerspective for Homography
-        im2_aligned = cv.warpPerspective(im2, warp_matrix, (im1_size[1], im1_size[0]),
+        im2_aligned = cv.warpPerspective(ori_img2, warp_matrix, (im1_size[1], im1_size[0]),
                                          flags=cv.INTER_LINEAR + cv.WARP_INVERSE_MAP)
     else:
         # Use warpAffine for Translation, Euclidean and Affine
-        im2_aligned = cv.warpAffine(im2, warp_matrix, (im1_size[1], im1_size[0]),
+        im2_aligned = cv.warpAffine(ori_img2, warp_matrix, (im1_size[1], im1_size[0]),
                                     flags=cv.INTER_LINEAR + cv.WARP_INVERSE_MAP)
 
     return im2_aligned, 0
@@ -176,8 +184,8 @@ def AKAZEimageAlignment(ori_img1, ori_img2):
         return ori_img1, False
     else:
         # # Draw matches
-        # img3 = cv.drawMatchesKnn(img1,kp1,img2,kp2,good_matches,None,flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-        # cv.imshow('matches', img3)
+        img3 = cv.drawMatchesKnn(img1,kp1,img2,kp2,good_matches,None,flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+        cv.imwrite('matches.jpg', img3)
 
         # Select good matched keypoints
         ref_matched_kpts = np.float32([kp1[m[0].queryIdx].pt for m in good_matches]).reshape(-1,1,2)
@@ -199,16 +207,77 @@ def AKAZEimageAlignment(ori_img1, ori_img2):
 def AKAZEAlignment(imgStack,refIndex):
     refImg = imgStack[refIndex]
     outStack = []
+    idxStack = []
+
     for index in np.arange(len(imgStack)):
         if index == refIndex:
-            outStack.append(index)
+            outStack.append(imgStack[index])
+            idxStack.append(index)
         else:
             currImg = imgStack[index]
             outImg, match_flag = AKAZEimageAlignment(currImg, refImg)
             if match_flag:
-                outStack.append(index)
+                outStack.append(outImg)
+                idxStack.append(index)
                 cv.imwrite('./mid/'+str(index)+'.jpg', outImg)
-    return outStack
+    return idxStack, outStack
+
+
+def SIFTAlignment(imgStack,refIndex, global_list):
+    refImg = imgStack[refIndex]
+    outStack = []
+    idxStack = []
+
+    for index in np.arange(len(imgStack)):
+        if index == refIndex:
+            outStack.append(imgStack[index])
+            idxStack.append(index)
+        else:
+            currImg = imgStack[index]
+            outImg, match_flag = SIFT.newAlignment(refImg, currImg, global_list[refIndex], global_list[index])
+            if match_flag:
+                outStack.append(outImg)
+                idxStack.append(index)
+                cv.imwrite('./mid/'+str(index)+'.jpg', outImg)
+    return idxStack, outStack
+
+
+def SIFTProcess(img_list, exposure_times):
+    global_list = []
+    time_1 = os.times()
+    threads = []
+
+    threadID = 0
+    # for idx in range(4):
+    for img in img_list:
+        # img = img_list[idx]
+        image = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        thread = multiThreads.myThread(threadID, image, global_list)
+        thread.start()
+        threads.append(thread)
+        threadID += 1
+
+    for t in threads:
+        t.join()
+
+    time_2 = os.times()
+    print("Totoal time :", str(time_2-time_1))
+
+    global_list.sort(key=lambda x: x[0])
+    global_list = np.array(global_list[:,1:3])
+
+
+    refImgIndex = chooseRef.getRefImage_br(img_list)
+    cv.imwrite("ref.jpg", img_list[refImgIndex])
+    res_img_list = []
+    res_exp_list = []
+    idx_list, res_img_list = SIFTAlignment(img_list,refImgIndex, global_list)
+
+    for idx in idx_list:
+        # res_img_list.append(image_list[idx])
+        res_exp_list.append(exposure_times[idx])
+
+    return res_img_list, res_exp_list
 
 def process(image_list, exposure_times, mode):
     if(mode=='MTB'):
@@ -217,13 +286,15 @@ def process(image_list, exposure_times, mode):
         alignMTB.process(image_list, image_list)
         return image_list, exposure_times
     elif(mode=='ORB'):
-        refImgIndex = chooseRef.getRefImage(image_list)
+        refImgIndex = chooseRef.getRefImage_br(image_list)
+        cv.imwrite("ref.jpg", image_list[refImgIndex])
         return ORBAlignment(image_list,refImgIndex,exposure_times)
     elif(mode=='grad'):
         # todo
         return image_list, exposure_times
     elif(mode=='ECC'):
-        refImgIndex= chooseRef.getRefImage(image_list)
+        refImgIndex= chooseRef.getRefImage_br(image_list)
+        cv.imwrite("ref.jpg", image_list[refImgIndex])
         return ECCAlignment(image_list,refImgIndex), exposure_times
     elif(mode=='AKAZE'):
         # refImgIndex = chooseRef.getRefImage(image_list)
@@ -231,10 +302,12 @@ def process(image_list, exposure_times, mode):
         cv.imwrite("ref.jpg", image_list[refImgIndex])
         res_img_list = []
         res_exp_list = []
-        idx_list = AKAZEAlignment(image_list,refImgIndex)
+        idx_list, res_img_list = AKAZEAlignment(image_list,refImgIndex)
         for idx in idx_list:
-            res_img_list.append(image_list[idx])
+            # res_img_list.append(image_list[idx])
             res_exp_list.append(exposure_times[idx])
         return res_img_list, res_exp_list
+    elif(mode=='SIFT'):
+        return SIFTProcess(image_list, exposure_times)
     else:
         return image_list, exposure_times

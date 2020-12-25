@@ -409,6 +409,9 @@ def generateDescriptors(keypoints, gaussian_images, window_width=4, num_bins=8, 
 
 
 def newAlignment(img1, img2, tuple_1, tuple_2):
+    origin_im1 = img1.copy()
+    origin_im2 = img2.copy()
+
     kp1, des1 = tuple_1[0], tuple_1[1]
     kp2, des2 = tuple_2[0], tuple_2[1]
 
@@ -434,18 +437,14 @@ def newAlignment(img1, img2, tuple_1, tuple_2):
         if M is None:
             return img2, False
 
-        # Draw detected template in scene image
-        h, w = img1.shape
-        pts = np.float32([[0, 0],
-                          [0, h - 1],
-                          [w - 1, h - 1],
-                          [w - 1, 0]]).reshape(-1, 1, 2)
-        dst = cv2.perspectiveTransform(pts, M)
+        warped_image = cv2.warpPerspective(origin_im2, M, (origin_im1.shape[1], origin_im1.shape[0]))
 
-        img2 = cv2.polylines(img2, [np.int32(dst)], True, 255, 3, cv2.LINE_AA)
+        h1 = img1.shape[0]
+        w1 = img1.shape[1]
 
-        h1, w1 = img1.shape
-        h2, w2 = img2.shape
+        h2 = img2.shape[0]
+        w2 = img2.shape[1]
+
         nWidth = w1 + w2
         nHeight = max(h1, h2)
         hdif = int((h2 - h1) / 2)
@@ -465,7 +464,7 @@ def newAlignment(img1, img2, tuple_1, tuple_2):
         print("Not enough matches are found - %d/%d" % (len(good), MIN_MATCH_COUNT))
         return img2, False
 
-    return img2, True
+    return warped_image, True
 
 
 def imageAlignment(img1, img2):

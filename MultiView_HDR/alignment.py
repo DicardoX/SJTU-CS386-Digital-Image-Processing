@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 import os
+import time
 import chooseRef
 import multiThreads
 import SIFT
@@ -244,7 +245,7 @@ def SIFTAlignment(imgStack,refIndex, global_list):
 
 def SIFTProcess(img_list, exposure_times):
     global_list = []
-    time_1 = os.times()
+    time_1 = time.time()
     threads = []
 
     threadID = 0
@@ -260,11 +261,12 @@ def SIFTProcess(img_list, exposure_times):
     for t in threads:
         t.join()
 
-    time_2 = os.times()
-    print("Totoal time :", str(time_2-time_1))
+    time_2 = time.time()
+    c = time_2 - time_1
+    print("Totoal time :", c)
 
     global_list.sort(key=lambda x: x[0])
-    global_list = np.array(global_list[:,1:3])
+    global_list = np.array(global_list)[:,1:3]
 
 
     refImgIndex = chooseRef.getRefImage_br(img_list)

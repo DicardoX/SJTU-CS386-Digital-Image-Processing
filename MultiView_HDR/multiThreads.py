@@ -132,7 +132,7 @@ class myThread (threading.Thread):
         self.list = list
     def run(self):
         # print("Processing No.", self.index, "image")
-        time1 = os.times()
+        time1 = time.time()
         sigma=1.6
         num_intervals=3
         assumed_blur=0.5
@@ -162,9 +162,9 @@ class myThread (threading.Thread):
         self.list.append([self.index, keypoints, descriptors])
         threadLock.release()
 
-        time2 = os.times()
-
-        print("Processing No.", self.index," costs ", str(time2-time1))
+        time2 = time.time()
+        c = time2 - time1
+        print("Processing No.", self.index," costs ", c)
 
 
 def SIFTAlignment(imgStack,refIndex, global_list):
@@ -187,7 +187,8 @@ def SIFTAlignment(imgStack,refIndex, global_list):
 
 def main():
     global_list = []
-    time_1 = os.times()
+    time_1 = time.time()
+    print(time_1)
     fileFolderPath = './test_image/Hall/'
     exposure_times,img_list,filenames = getImageStackAndExpos(fileFolderPath)
 
@@ -209,11 +210,12 @@ def main():
     for t in threads:
         t.join()
 
-    time_2 = os.times()
-    print("Totoal time :", str(time_2-time_1))
+    time_2 = time.time()
+    c = time_2 - time_1
+    print("Totoal time :", c)
 
     global_list.sort(key=lambda x: x[0])
-    global_list = np.array(global_list[:,1:3])
+    global_list = np.array(global_list)[:,1:3]
 
 
     refImgIndex = chooseRef.getRefImage_br(img_list)
@@ -225,6 +227,8 @@ def main():
     for idx in idx_list:
         # res_img_list.append(image_list[idx])
         res_exp_list.append(exposure_times[idx])
+
+
 
 
 

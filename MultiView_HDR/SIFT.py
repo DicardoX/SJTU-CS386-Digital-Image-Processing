@@ -439,27 +439,27 @@ def newAlignment(img1, img2, tuple_1, tuple_2):
 
         warped_image = cv2.warpPerspective(origin_im2, M, (origin_im1.shape[1], origin_im1.shape[0]))
 
-        h1 = img1.shape[0]
-        w1 = img1.shape[1]
-
-        h2 = img2.shape[0]
-        w2 = img2.shape[1]
-
-        nWidth = w1 + w2
-        nHeight = max(h1, h2)
-        hdif = int((h2 - h1) / 2)
-        newimg = np.zeros((nHeight, nWidth, 3), np.uint8)
-
-        for i in range(3):
-            newimg[hdif:hdif + h1, :w1, i] = img1
-            newimg[:h2, w1:w1 + w2, i] = img2
-        # Draw SIFT keypoint matches
-        for m in good:
-            pt1 = (int(kp1[m.queryIdx].pt[0]), int(kp1[m.queryIdx].pt[1] + hdif))
-            pt2 = (int(kp2[m.trainIdx].pt[0] + w1), int(kp2[m.trainIdx].pt[1]))
-            cv2.line(newimg, pt1, pt2, (255, 0, 0))
-
-        cv2.imwrite("matches"+str(os.times())+".jpg", newimg)
+        # h1 = img1.shape[0]
+        # w1 = img1.shape[1]
+        #
+        # h2 = img2.shape[0]
+        # w2 = img2.shape[1]
+        #
+        # nWidth = w1 + w2
+        # nHeight = max(h1, h2)
+        # hdif = int((h2 - h1) / 2)
+        # newimg = np.zeros((nHeight, nWidth, 3), np.uint8)
+        #
+        # for i in range(3):
+        #     newimg[hdif:hdif + h1, :w1, i] = img1
+        #     newimg[:h2, w1:w1 + w2, i] = img2
+        # # Draw SIFT keypoint matches
+        # for m in good:
+        #     pt1 = (int(kp1[m.queryIdx].pt[0]), int(kp1[m.queryIdx].pt[1] + hdif))
+        #     pt2 = (int(kp2[m.trainIdx].pt[0] + w1), int(kp2[m.trainIdx].pt[1]))
+        #     cv2.line(newimg, pt1, pt2, (255, 0, 0))
+        #
+        # cv2.imwrite("matches"+str(os.times())+".jpg", newimg)
     else:
         print("Not enough matches are found - %d/%d" % (len(good), MIN_MATCH_COUNT))
         return img2, False

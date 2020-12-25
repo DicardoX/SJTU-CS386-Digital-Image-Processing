@@ -234,6 +234,7 @@ def SIFTAlignment(imgStack,refIndex, global_list):
             outStack.append(imgStack[index])
             idxStack.append(index)
         else:
+            print(index)
             currImg = imgStack[index]
             outImg, match_flag = SIFT.newAlignment(refImg, currImg, global_list[refIndex], global_list[index])
             if match_flag:
@@ -288,6 +289,7 @@ def process(image_list, exposure_times, mode):
         alignMTB.process(image_list, image_list)
         return image_list, exposure_times
     elif(mode=='ORB'):
+        print("Work mode: ORB")
         refImgIndex = chooseRef.getRefImage_br(image_list)
         cv.imwrite("ref.jpg", image_list[refImgIndex])
         return ORBAlignment(image_list,refImgIndex,exposure_times)
@@ -295,10 +297,12 @@ def process(image_list, exposure_times, mode):
         # todo
         return image_list, exposure_times
     elif(mode=='ECC'):
+        print("Work mode: ECC")
         refImgIndex= chooseRef.getRefImage_br(image_list)
         cv.imwrite("ref.jpg", image_list[refImgIndex])
         return ECCAlignment(image_list,refImgIndex), exposure_times
     elif(mode=='AKAZE'):
+        print("Work mode: AKAZE")
         # refImgIndex = chooseRef.getRefImage(image_list)
         refImgIndex = chooseRef.getRefImage_br(image_list)
         cv.imwrite("ref.jpg", image_list[refImgIndex])
@@ -310,6 +314,7 @@ def process(image_list, exposure_times, mode):
             res_exp_list.append(exposure_times[idx])
         return res_img_list, res_exp_list
     elif(mode=='SIFT'):
+        print("Work mode: SIFT")
         return SIFTProcess(image_list, exposure_times)
     else:
         return image_list, exposure_times

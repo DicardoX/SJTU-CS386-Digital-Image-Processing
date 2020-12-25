@@ -60,16 +60,37 @@ def getImageStackAndExpos(folderPath):
     exposTimes = []
     imageStack = []
     filenames = []
+    flag = False
     for file in files:
         filePath = join(folderPath,file)
-        exposTime = get_exposure_time(filePath)
+        # print(file_extension(filePath))
+        if file_extension(filePath) != '.ppm':
+            flag = False
+            exposTime = get_exposure_time(filePath)
+            exposTimes.append(exposTime)
+        else:
+            flag = True
         if(file_extension(filePath)!='.dng'):
             currImage = cv2.imread(filePath)
         elif(file_extension(filePath)=='.dng'):
             currImage = readRawImage(filePath)
-        exposTimes.append(exposTime)
+
         imageStack.append(currImage)
         filenames.append(file)
+
+    if flag:
+        inpt = input("Please input exposure time:(split by \',\')")
+        inpt = inpt.split(',')
+        for it in inpt:
+            it = it.split('/')
+            if len(it) > 1:
+                it = float(it[0]) / float(it[1])
+            else:
+                it = float(it[0])
+            exposTimes.append(it)
+
+        print((exposTimes))
+        exposTimes.reverse()
     # exposTimes = [1.0/1000,1.0/500,1.0/250,1.0/125,1.0/60,1.0/30,1.0/15,1.0/8,1.0/4,1.0/2,1.0,2.0,3.75,7.5,15,30]
     # exposTimes.reverse()
 

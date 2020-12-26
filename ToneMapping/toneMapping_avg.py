@@ -1,3 +1,5 @@
+# niqe score: 4.62616037411216
+
 from CRF import CRF_func, save_hdr
 import cv2
 import math

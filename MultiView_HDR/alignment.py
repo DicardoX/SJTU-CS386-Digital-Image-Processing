@@ -13,8 +13,10 @@ GOOD_MATCH_PERCENT = 0.05
 
 def ORBimageAlignment(ori_img2, ori_img1):
 
-    im1 = equalize(ori_img1)
-    im2 = equalize(ori_img2)
+    # im1 = equalize(ori_img1)
+    # im2 = equalize(ori_img2)
+    im1 = ori_img1
+    im2 = ori_img2
 
     # Convert images to grayscale
     im1Gray = cv.cvtColor(im1, cv.COLOR_BGR2GRAY)
@@ -24,6 +26,10 @@ def ORBimageAlignment(ori_img2, ori_img1):
     orb = cv.ORB_create(MAX_MATCHES)
     keypoints1, descriptors1 = orb.detectAndCompute(im1Gray, None)
     keypoints2, descriptors2 = orb.detectAndCompute(im2Gray, None)
+
+    img_kp = im1.copy()
+    img_kp = cv.drawKeypoints(im1, keypoints1, img_kp)
+    cv.imwrite("./res/"+str(os.times())+"kp.jpg", img_kp)
 
     # Match features.
     matcher = cv.DescriptorMatcher_create(cv.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
@@ -79,12 +85,12 @@ def ORBAlignment(imgStack,refIndex,exposure_times):
 
 '''ECC Alignment'''
 def ECCimageAlignment(ori_img1, ori_img2):
-    im1 = equalize(ori_img1)
-    im2 = equalize(ori_img2)
+    # im1 = equalize(ori_img1)
+    # im2 = equalize(ori_img2)
 
     # Convert images to grayscale
-    im1_gray = cv.cvtColor(im1, cv.COLOR_BGR2GRAY)
-    im2_gray = cv.cvtColor(im2, cv.COLOR_BGR2GRAY)
+    im1_gray = cv.cvtColor(ori_img1, cv.COLOR_BGR2GRAY)
+    im2_gray = cv.cvtColor(ori_img2, cv.COLOR_BGR2GRAY)
 
     # Find size of image1
     im1_size = ori_img1.shape

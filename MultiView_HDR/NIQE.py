@@ -7,9 +7,12 @@ import cv2
 import os
 
 alpha_p = np.arange(0.2, 10, 0.001)
-alpha_r_p = scipy.special.gamma(2.0 / alpha_p) ** 2 / (scipy.special.gamma(1.0 / alpha_p) * scipy.special.gamma(3. / alpha_p))
+alpha_r_p = scipy.special.gamma(2.0 / alpha_p) ** 2 / (
+            scipy.special.gamma(1.0 / alpha_p) * scipy.special.gamma(3. / alpha_p))
+
 
 def estimate_aggd_params(x):
+
     x_left = x[x < 0]
     x_right = x[x >= 0]
     stddev_left = math.sqrt((np.sum(x_left ** 2) / (x_left.size)))
@@ -55,7 +58,7 @@ def niqe(image):
     else:
         img = image
 
-    model_mat = scipy.io.loadmat(os.path.split(__file__)[0] + '/resources/mvg_params.mat')
+    model_mat = scipy.io.loadmat(os.path.split(__file__)[0] + '/mvg_params.mat')
     model_mu = model_mat['mean']
     model_cov = model_mat['cov']
 
@@ -75,7 +78,8 @@ def niqe(image):
         for block_col in range(img_norm.shape[0] // block_size):
             for block_row in range(img_norm.shape[1] // block_size):
                 block_features = compute_nss_features(
-                    img_norm[block_col * block_size:(block_col + 1) * block_size, block_row * block_size:(block_row + 1) * block_size])
+                    img_norm[block_col * block_size:(block_col + 1) * block_size,
+                    block_row * block_size:(block_row + 1) * block_size])
                 scale_features.append(block_features)
 
         if features is None:

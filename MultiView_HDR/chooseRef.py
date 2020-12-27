@@ -3,6 +3,23 @@ import numpy as np
 import quality
 
 # preprocess: choose the standard photo
+
+def getRefImage_br(imgStack):
+    bright_list = []
+    # for img in imgStack:
+    #     k = quality.bright(img)
+    #     bright_list.append(k)
+    #
+    # refIndex = bright_list.index(min(bright_list))
+
+    for img in imgStack:
+        k = quality.getImageVar(img)
+        bright_list.append(k)
+
+    refIndex = bright_list.index(max(bright_list))
+    print(refIndex)
+    return  refIndex
+
 def getSaturNum(img):
     gray_image = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     underExpos=np.count_nonzero(gray_image==0)
@@ -22,18 +39,3 @@ def getRefImage(imgStack):
     # print(refIndex)
     return  refIndex
 
-def getRefImage_br(imgStack):
-    bright_list = []
-    # for img in imgStack:
-    #     k = quality.bright(img)
-    #     bright_list.append(k)
-    #
-    # refIndex = bright_list.index(min(bright_list))
-
-    for img in imgStack:
-        k = quality.getImageVar(img)
-        bright_list.append(k)
-
-    refIndex = bright_list.index(max(bright_list))
-    print(refIndex)
-    return  refIndex

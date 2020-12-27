@@ -41,7 +41,8 @@ def computeKeypointsAndDescriptors(image, sigma=1.6, num_intervals=3, assumed_bl
 def generateBaseImage(image, sigma, assumed_blur):
     image = resize(image, (0, 0), fx=2, fy=2, interpolation=INTER_LINEAR)
     sigma_diff = sqrt(max((sigma ** 2) - ((2 * assumed_blur) ** 2), 0.01))
-    return GaussianBlur(image, (0, 0), sigmaX=sigma_diff, sigmaY=sigma_diff)  # the image blur is now sigma instead of assumed_blur
+    # the image blur is now sigma instead of assumed_blur
+    return GaussianBlur(image, (0, 0), sigmaX=sigma_diff, sigmaY=sigma_diff)
 
 
 # Compute number of octaves in image pyramid as function of base image shape (OpenCV default)
@@ -415,17 +416,28 @@ def newAlignment(img1, img2, tuple_1, tuple_2):
     kp1, des1 = tuple_1[0], tuple_1[1]
     kp2, des2 = tuple_2[0], tuple_2[1]
 
+
+    # # TODO
+    # U,S,V = np.linalg.svd(des2)
+    # size_projected = 32
+    # projector = V[:,:size_projected]
+    # #for i in range(len(des2_list)):
+    # #    des2_list[i] = des2_list[i].dot(projector)
+    # des2_new = des2.dot(projector)
+    # des1_new = des1.dot(projector)
+
     # Initialize and use FLANN
     FLANN_INDEX_KDTREE = 0
     index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
     search_params = dict(checks = 50)
     flann = cv2.FlannBasedMatcher(index_params, search_params)
     matches = flann.knnMatch(des1, des2, k=2)
+    # matches = flann.knnMatch(des1_new, des2_new, k=2)
 
     # Lowe's ratio test
     good = []
     for m, n in matches:
-        if m.distance < 0.7 * n.distance:
+        if m.distance < 0.4 * n.distance:
             good.append(m)
 
     if len(good) > MIN_MATCH_COUNT:

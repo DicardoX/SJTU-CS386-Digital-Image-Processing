@@ -64,12 +64,13 @@ def getImageStackAndExpos(folderPath):
     for file in files:
         filePath = join(folderPath,file)
         # print(file_extension(filePath))
-        if file_extension(filePath) != '.ppm':
-            flag = False
-            exposTime = get_exposure_time(filePath)
-            exposTimes.append(exposTime)
-        else:
-            flag = True
+        flag = True
+        # if file_extension(filePath) != '.ppm':
+        #     flag = False
+        #     exposTime = get_exposure_time(filePath)
+        #     exposTimes.append(exposTime)
+        # else:
+        #     flag = True
         if(file_extension(filePath)!='.dng'):
             currImage = cv2.imread(filePath)
         elif(file_extension(filePath)=='.dng'):

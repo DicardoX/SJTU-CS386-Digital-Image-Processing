@@ -3,8 +3,11 @@ MultiView_HDR/test_image/
 MultiView_HDR/mid
 MultiView_HDR/res
 OpenCV_Sample/
-Exposure-Fusion/__pycache__/*
-.vscode
+Exposure-Fusion/
+__pycache__/
+*.vscode
 *.jpg
 *.ppm
 *.png
+*.txt
+.idea/

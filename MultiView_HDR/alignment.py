@@ -165,8 +165,10 @@ def AKAZEimageAlignment(ori_img1, ori_img2):
     # ori_img1 = cv.imread('./test_image/myTest/StLouisArchMultExpEV-1.82.jpg')  # referenceImage
     # ori_img2 = cv.imread('./test_image/myTest/StLouisArchMultExpEV+4.09.jpg')  # sensedImage
 
-    img1 = equalize(ori_img1)
-    img2 = equalize(ori_img2)
+    # img1 = equalize(ori_img1)
+    # img2 = equalize(ori_img2)
+    img1 = ori_img1
+    img2 = ori_img2
 
     img1 = cv.cvtColor(img1, cv.COLOR_BGR2GRAY)
     img2 = cv.cvtColor(img2, cv.COLOR_BGR2GRAY)
